@@ -5,6 +5,7 @@
 (() => {
   const MATH_SELECTOR = [
     '.katex',
+    '.ztext-math[data-tex]',
     '[data-math]',
     'mjx-container',
     '.MathJax_Display',
@@ -161,6 +162,11 @@
       }
     }
 
+    // Zhihu
+    if (el.classList.contains('ztext-math') && el.hasAttribute('data-tex')) {
+      return stripTexDelimiters(el.getAttribute('data-tex'));
+    }
+
     // KaTeX
     if (el.classList.contains('katex')) {
       const mathSource = el.closest('[data-math-source]')?.getAttribute('data-math-source');
@@ -212,10 +218,38 @@
     return null;
   }
 
+  function stripTexDelimiters(tex) {
+    const value = tex?.trim();
+    if (!value) return null;
+
+    const delimiterPairs = [
+      ['\\[', '\\]'],
+      ['\\(', '\\)'],
+      ['$$', '$$'],
+      ['$', '$'],
+    ];
+
+    for (const [opening, closing] of delimiterPairs) {
+      if (value.startsWith(opening) && value.endsWith(closing)) {
+        return value.slice(opening.length, -closing.length).trim() || null;
+      }
+    }
+
+    return value;
+  }
+
   // Determine if math should be inline or display mode
   function getDisplayMode(el) {
     // Wikipedia
     if (el.classList.contains('mwe-math-fallback-image-display')) return 'display';
+
+    // Zhihu's data-tex may use display delimiters even for inline equations, so
+    // prefer the render mode recorded by its nested MathJax script.
+    if (el.classList.contains('ztext-math')) {
+      const script = el.querySelector('script[type^="math/tex"]');
+      const type = script?.getAttribute('type')?.replace(/\s/g, '').toLowerCase() || '';
+      return type.includes('mode=display') ? 'display' : 'inline';
+    }
 
     // MathJax v2
     if (el.classList.contains('MathJax_Display') || el.classList.contains('MJXc-display')) {
