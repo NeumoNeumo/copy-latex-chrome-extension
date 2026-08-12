@@ -148,6 +148,9 @@
 
     // KaTeX
     if (el.classList.contains('katex')) {
+      const mathSource = el.closest('[data-math-source]')?.getAttribute('data-math-source');
+      if (mathSource && mathSource.trim()) return mathSource.trim();
+
       const ann = el.querySelector('.katex-mathml annotation[encoding="application/x-tex"]');
       if (ann && ann.textContent) return ann.textContent.trim();
 
