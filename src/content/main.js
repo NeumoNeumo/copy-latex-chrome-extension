@@ -7,6 +7,7 @@
 		lastCopyGestureTs: 0,
 		lastCopiedTex: null,
 	};
+	ns.state.mathJaxV3LatexById = ns.state.mathJaxV3LatexById || Object.create(null);
 
 	async function injectMathJaxPageScript() {
 		try {
@@ -25,9 +26,11 @@
 	window.addEventListener('message', (event) => {
 		if (event.source !== window) return;
 		if (event.data && event.data.type === 'CopyLaTeX_MathJaxV3') {
-			ns.state.lastMathJaxV3Latex = event.data.latex;
-			// Keep compatibility with content/selection-to-markdown.js
-			window.__lastMathJaxV3Latex = event.data.latex;
+			const latex = typeof event.data.latex === 'string' ? event.data.latex.trim() : '';
+			const mjxId = event.data.mjxId;
+			if (latex && mjxId !== null && mjxId !== undefined && String(mjxId)) {
+				ns.state.mathJaxV3LatexById[String(mjxId)] = latex;
+			}
 		}
 	});
 

@@ -7,6 +7,7 @@
 		lastCopyGestureTs: 0,
 		lastCopiedTex: null,
 	};
+	ns.state.mathJaxV3LatexById = ns.state.mathJaxV3LatexById || Object.create(null);
 
 	function isWikipedia() {
 		const hostname = window.location.hostname;
@@ -52,10 +53,17 @@
 		const mjxContainer = el?.closest?.('mjx-container');
 		if (!mjxContainer) return null;
 
-    // Use the last received LaTeX from the page script
-		if (ns.state.lastMathJaxV3Latex) {
-			return ns.state.lastMathJaxV3Latex;
-		}
+    // Newer MathJax output preserves the complete expression on the root
+    // mjx-math element. Prefer this per-container source over any cached value.
+		const mjxMath = mjxContainer.querySelector?.('mjx-math[data-latex]');
+		const embeddedLatex = mjxMath?.getAttribute('data-latex')?.trim();
+		if (embeddedLatex) return embeddedLatex;
+
+    // Some MathJax versions only expose the source through the page API. Cache
+    // those results by container ID so one expression cannot leak into another.
+		const mjxId = mjxContainer.getAttribute?.('ctxtmenu_counter');
+		const cachedLatex = mjxId ? ns.state.mathJaxV3LatexById[mjxId] : null;
+		if (cachedLatex) return cachedLatex;
 
     // Fallback: try to find any associated script elements nearby
 		let current = mjxContainer;
@@ -64,7 +72,7 @@
 			current = current.nextElementSibling;
 			if (
 				current.tagName === 'SCRIPT' &&
-				(current.type === 'math/tex' || current.type === 'math/tex; mode=display')
+				current.type?.startsWith('math/tex')
 			) {
 				return current.textContent.trim();
 			}

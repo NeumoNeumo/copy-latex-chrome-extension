@@ -191,18 +191,7 @@
 
     // MathJax v3/v4
     if (el.tagName === 'MJX-CONTAINER') {
-      // Try global variable set by page script
-      const globalLatex = window.__lastMathJaxV3Latex;
-      if (globalLatex) return globalLatex;
-
-      // Fallback to script element
-      const sibling = el.nextElementSibling;
-      if (sibling && sibling.tagName === 'SCRIPT') {
-        const scriptEl = sibling;
-        if (scriptEl.type && scriptEl.type.includes('math/tex')) {
-          return sibling.textContent?.trim() || null;
-        }
-      }
+      return window.CopyLatex?.detect?.findMathJaxV3Tex(el) || null;
     }
 
     // MathJax v2
