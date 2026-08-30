@@ -46,9 +46,16 @@
 			}
 		}
 
+		const googleAiTex = ns.detect.findGoogleAIMathTex(e.target);
+		if (googleAiTex) {
+			const googleAiTarget = e.target.closest?.('[data-xpm-copy-root][data-xpm-latex]') || e.target.closest?.('[data-xpm-latex]');
+			showOverlayForTarget(googleAiTarget || e.target, googleAiTex);
+			return;
+		}
+
 		const katex = ns.detect.findKaTeXElementFromEventTarget(e.target);
 		if (katex) {
-			const tex = ns.detect.findAnnotationTex(katex);
+			const tex = ns.detect.findChatGPTTex(katex) || ns.detect.findAnnotationTex(katex);
 			if (tex) {
 				showOverlayForTarget(katex, tex);
 				return;
@@ -99,8 +106,14 @@
 		const movingIntoKaTeX = ns.detect.findKaTeXElementFromEventTarget(related);
 		if (movingIntoKaTeX) return;
 
+		if (related?.closest?.('[data-xpm-latex]') || related?.closest?.('[data-xpm-copy-root]')) {
+			return;
+		}
+
 		if (
 			related?.closest?.('[data-math]') ||
+			related?.closest?.('[data-xpm-latex]') ||
+			related?.closest?.('[data-xpm-copy-root]') ||
 			related?.closest?.('mjx-container') ||
 			related?.closest?.('.MathJax_Display, .MJXc-display') ||
 			related?.closest?.('.MathJax, .mjx-chtml, .MathJax_CHTML, .MathJax_MathML')
@@ -146,9 +159,15 @@
 			}
 		}
 
+		const googleAiTex = ns.detect.findGoogleAIMathTex(e.target);
+		if (googleAiTex) {
+			ns.output.copyLatex(googleAiTex);
+			return;
+		}
+
 		const katex = ns.detect.findKaTeXElementFromEventTarget(e.target);
 		if (katex) {
-			const tex = ns.detect.findAnnotationTex(katex);
+			const tex = ns.detect.findChatGPTTex(katex) || ns.detect.findAnnotationTex(katex);
 			if (tex) {
 				const now = Date.now();
 				if (ns.state.lastCopiedTex === tex && now - ns.state.lastCopyGestureTs < 700) return;
